@@ -1,30 +1,55 @@
-name: GitHub Actions 과제 테스트
+# =================================================================
+# [팀 프로젝트 중요 공지 & 개발 규칙]
+# 1. main 브랜치에 직접 코드를 작성하거나 push하지 않기!
+# 2. 반드시 'dev-이름' 형태로 개인 작업 브랜치를 생성하여 작업하기.
+# 3. 작업 완료 후 main으로 'Pull Request(PR)'를 날리기.
+# 4. PR이 생성되면 이 Actions 파이프라인이 자동으로 문법 검사를 수행합니다.
+# 5. Actions 검증(✔)과 팀원 승인이 완료되어야 main에 병합할 수 있습니다.
+# =================================================================
 
-# 1. 트리거 (언제 실행할 것인가?)
+name: GitHub Actions 팀플용
+
+# 1. 언제 실행할 것인가? (트리거)
 on:
   push:
-    branches: [ "main" ]  # main 브랜치에 코드가 push될 때
-  pull_request:
-    branches: [ "main" ]  # main 브랜치로 PR(병합 요청)이 날아올 때
+    branches: [ "main" ]
+    # 팀플 효율화: 소스 코드가 바뀔 때만 액션을 실행해서 서버 자원 아끼기
+    paths:
+      - 'src/**'        # src 폴더 내부의 파일이 바뀌거나
+      - '**.py'         # 프로젝트 내의 모든 파이썬 파일이 바뀌면 작동
+      - '!readme.md'    # 단순 설명서(readme.md)만 바뀐 거라면 작동하지 않음
 
-# 2. 잡 (어떤 가상 환경에서 무슨 일을 시킬 것인가?)
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'src/**'
+      - '**.py'
+      - '!readme.md'
+
+# 2. 어떤 일들을 순서대로 실행할 것인가?
 jobs:
   build-and-test:
-    runs-on: ubuntu-latest  # 최신 Ubuntu 리눅스 컴퓨터를 한 대 빌림
+    runs-on: ubuntu-latest  # 가상 리눅스 환경 빌리기
 
     steps:
-      # Step 1: 내 레포지토리에 있는 소스 코드를 가상 컴퓨터로 다운로드
+      # (Step 1) 팀원들이 올린 소스 코드를 가상 컴퓨터로 가져오기
       - name: 코드 체크아웃
         uses: actions/checkout@v4
 
-      # Step 2: 가상 컴퓨터에 테스트 환경(Python 3.10) 세팅
+      # (Step 2) 파이썬 3.10 환경 구성하기
       - name: Python 환경 설정
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
-      # Step 3: 정상적으로 환경이 만들어졌는지 기본 명령어 실행 테스트
-      - name: Hello World 및 버전 확인 테스트
+      # (Step 3) 팀원들의 휴먼 에러를 잡아줄 검사 툴 자동 설치
+      - name: 문법 검사 툴 설치
         run: |
-          echo "GitHub Actions가 성공적으로 실행되었습니다!"
-          python --version
+          python -m pip install --upgrade pip
+          pip install flake8
+
+      # (Step 4) 팀원들의 코드 오타 및 단순 문법 에러 자동 검사 (Lint)
+      - name: Lint 테스트 (문법 검사)
+        run: |
+          # 코드에 들여쓰기 에러나 문법 오류(Syntax Error)가 있으면 여기서 빌드를 터트려 main 병합을 막음
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
