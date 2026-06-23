@@ -1,0 +1,30 @@
+name: GitHub Actions 과제 테스트
+
+# 1. 트리거 (언제 실행할 것인가?)
+on:
+  push:
+    branches: [ "main" ]  # main 브랜치에 코드가 push될 때
+  pull_request:
+    branches: [ "main" ]  # main 브랜치로 PR(병합 요청)이 날아올 때
+
+# 2. 잡 (어떤 가상 환경에서 무슨 일을 시킬 것인가?)
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest  # 최신 Ubuntu 리눅스 컴퓨터를 한 대 빌림
+
+    steps:
+      # Step 1: 내 레포지토리에 있는 소스 코드를 가상 컴퓨터로 다운로드
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+
+      # Step 2: 가상 컴퓨터에 테스트 환경(Python 3.10) 세팅
+      - name: Python 환경 설정
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      # Step 3: 정상적으로 환경이 만들어졌는지 기본 명령어 실행 테스트
+      - name: Hello World 및 버전 확인 테스트
+        run: |
+          echo "GitHub Actions가 성공적으로 실행되었습니다!"
+          python --version
